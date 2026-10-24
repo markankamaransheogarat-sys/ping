@@ -69,3 +69,6 @@ impl SplitEscrow {
         env.storage().persistent().get(&Key::Split(id)).expect("no split")
     }
 }
+
+#[cfg(test)]
+mod test;

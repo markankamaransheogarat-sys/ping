@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  contracts:
+    name: Test Soroban Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Pin ed25519-dalek to 2.2.0 for soroban compatibility
+        run: |
+          cd contracts/split-escrow
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0 || true
+      - name: Cargo Test
+        run: |
+          cd contracts/split-escrow
+          cargo test
+
+  apps:
+    name: Build Apps (Bot & MiniApp)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build Bot
+        run: |
+          cd apps/bot
+          npm ci
+          npm run build
+      - name: Build MiniApp
+        run: |
+          cd apps/miniapp
+          npm ci
+          npm run build
