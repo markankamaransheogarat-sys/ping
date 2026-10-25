@@ -28,7 +28,7 @@ bot.command("start", async (ctx) => {
       const dropId = payload.replace("drop_", "");
       const kb = new InlineKeyboard().webApp(
         "🎁 Open & Claim Drop",
-        `${appUrl}/drop?id=${dropId}`
+        `${appUrl}?drop=${dropId}`
       );
       return ctx.reply(
         `🎉 You received a **Ping Drop**!\n\nTap the button below to claim it straight to your wallet.`,
@@ -40,7 +40,7 @@ bot.command("start", async (ctx) => {
       const splitId = payload.replace("split_", "");
       const kb = new InlineKeyboard().webApp(
         "🧾 View & Chip In",
-        `${appUrl}/split?id=${splitId}`
+        `${appUrl}?split=${splitId}`
       );
       return ctx.reply(
         `🧾 You are invited to join a **Ping Split**!\n\nTap below to check the goal and chip in your share.`,
@@ -52,8 +52,8 @@ bot.command("start", async (ctx) => {
   const kb = new InlineKeyboard()
     .webApp("⚡ Open Ping App", `${appUrl}`)
     .row()
-    .webApp("🎁 Send a Drop", `${appUrl}/drop`)
-    .webApp("🧾 Start a Split", `${appUrl}/split`);
+    .webApp("🎁 Send a Drop", `${appUrl}?view=drop`)
+    .webApp("🧾 Start a Split", `${appUrl}?view=split`);
 
   return ctx.reply(
     "⚡ **Ping**: Money that flies like messages.\n\nSend money as easy as text. Split group expenses with trustless escrow on Stellar.",
@@ -62,14 +62,14 @@ bot.command("start", async (ctx) => {
 });
 
 bot.command("drop", async (ctx) => {
-  const kb = new InlineKeyboard().webApp("🎁 Send a Drop", `${appUrl}/drop`);
+  const kb = new InlineKeyboard().webApp("🎁 Send a Drop", `${appUrl}?view=drop`);
   return ctx.reply("Create a Ping Drop link and send funds to anyone instantly:", {
     reply_markup: kb,
   });
 });
 
 bot.command("split", async (ctx) => {
-  const kb = new InlineKeyboard().webApp("🧾 Start a Split", `${appUrl}/split`);
+  const kb = new InlineKeyboard().webApp("🧾 Start a Split", `${appUrl}?view=split`);
   return ctx.reply("Pool money with friends with automated smart-contract escrow refunds:", {
     reply_markup: kb,
   });
@@ -137,3 +137,4 @@ if (process.env.NODE_ENV !== "test") {
     console.log("[Ping] Telegram bot skipped (BOT_TOKEN not provided or placeholder)");
   }
 }
+

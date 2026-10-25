@@ -71,7 +71,7 @@ function App() {
 
     // Deep link parameters check
     const params = new URLSearchParams(window.location.search);
-    const dropParam = params.get("drop") || params.get("id");
+    const viewParam = params.get("view"); if (viewParam === "drop") setScreen("drop"); if (viewParam === "split") setScreen("split"); const dropParam = params.get("drop") || params.get("id");
     if (dropParam) {
       setClaimDropId(dropParam);
       setScreen("claim");
@@ -455,3 +455,4 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
+
