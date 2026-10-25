@@ -9,6 +9,21 @@ Ping is a Telegram Mini App + bot for sending money as easily as a message:
 
 ---
 
+## 📱 App Preview
+
+<p align="center">
+  <img src="assets/screenshots/screen-home.png" width="23%" alt="Ping Home Screen" />
+  <img src="assets/screenshots/screen-drop.png" width="23%" alt="Ping Drop Creation" />
+  <img src="assets/screenshots/screen-split.png" width="23%" alt="Ping Split Escrow" />
+  <img src="assets/screenshots/screen-claim.png" width="23%" alt="Ping Claim Screen" />
+</p>
+
+| 1. Home & Wallet | 2. Send Drop Link | 3. Smart Escrow Split | 4. One-Tap Claim |
+| :---: | :---: | :---: | :---: |
+| Native Testnet wallet with Friendbot faucet & live balance | Generate instant claim link with claimable balance | Trustless group pooling with live progress & auto-refund | Direct claim into wallet with Telegram haptic feedback |
+
+---
+
 ## Monorepo Structure
 
 | Path | Description |
