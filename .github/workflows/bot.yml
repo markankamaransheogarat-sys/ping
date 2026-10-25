@@ -1,0 +1,34 @@
+name: Run Ping Telegram Bot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  run-bot:
+    name: Run Telegram Bot Daemon
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and Build Bot
+        run: |
+          cd apps/bot
+          npm ci
+          npm run build
+
+      - name: Run Bot in Cloud
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          MINIAPP_URL: ${{ secrets.MINIAPP_URL }}
+          NODE_ENV: production
+        run: |
+          cd apps/bot
+          node dist/index.js
