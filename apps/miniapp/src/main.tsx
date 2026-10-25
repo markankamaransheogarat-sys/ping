@@ -1,7 +1,7 @@
 import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { getOrCreateWallet, fetchBalance, fundTestnetWallet, createDropLink, claimDrop } from "./stellar";
+import { getOrCreateWallet, fetchBalance, fundTestnetWallet, createDropLink, claimDrop, getNetworkMode, setNetworkMode, NetworkMode } from "./stellar";
 import { getTelegramWebApp } from "./telegram";
 import { Zap, Send, Users, ArrowLeft, RefreshCw, CheckCircle, Copy, Gift } from "lucide-react";
 
@@ -29,7 +29,7 @@ interface EnvelopeItem {
 }
 
 function App() {
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>("home"); const [network, setNetwork] = useState<NetworkMode>(getNetworkMode());
   const [wallet, setWallet] = useState<{ publicKey: string; secretKey: string } | null>(null);
   const [balances, setBalances] = useState<{ xlm: string; usdc: string }>({ xlm: "0", usdc: "0" });
   const [loading, setLoading] = useState(false);
@@ -255,7 +255,7 @@ function App() {
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Zap size={24} color="#38bdf8" />
-          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Ping ⚡</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Ping ⚡</h1><button className="badge badge-active" style={{ cursor: "pointer", border: "none" }} onClick={() => { const next = network === "testnet" ? "mainnet" : "testnet"; setNetwork(next); setNetworkMode(next); if (wallet) loadBalance(wallet.publicKey); }}>{network.toUpperCase()}</button>
         </div>
         {screen !== "home" && (
           <button className="btn btn-secondary" onClick={() => setScreen("home")} style={{ padding: "8px 12px" }}>
@@ -269,7 +269,7 @@ function App() {
         <>
           <div className="card" style={{ textAlign: "center" }}>
             <span style={{ fontSize: 13, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>
-              Stellar Testnet Balance
+              Stellar {network === "mainnet" ? "Mainnet" : "Testnet"} Balance
             </span>
             <div style={{ fontSize: 36, fontWeight: 800, margin: "12px 0", color: "#38bdf8" }}>
               {parseFloat(balances.xlm).toFixed(2)} <span style={{ fontSize: 20 }}>XLM</span>
@@ -635,3 +635,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
+
+
+
