@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { getOrCreateWallet, fetchBalance, fundTestnetWallet, createDropLink, claimDrop } from "./stellar";
 import { getTelegramWebApp } from "./telegram";
-import { Zap, Send, Users, ArrowLeft, RefreshCw, CheckCircle, Copy } from "lucide-react";
+import { Zap, Send, Users, ArrowLeft, RefreshCw, CheckCircle, Copy, Gift } from "lucide-react";
 
-type Screen = "home" | "drop" | "split" | "claim";
+type Screen = "home" | "drop" | "split" | "claim" | "envelope";
 
 interface SplitItem {
   id: number;
@@ -18,6 +18,16 @@ interface SplitItem {
   participants: string[];
 }
 
+interface EnvelopeItem {
+  id: number;
+  title: string;
+  total: number;
+  claims: number;
+  claimed: number;
+  share: number;
+  url: string;
+}
+
 function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [wallet, setWallet] = useState<{ publicKey: string; secretKey: string } | null>(null);
@@ -25,11 +35,28 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Drop State
+  // Single Drop State
   const [dropAmount, setDropAmount] = useState("5");
   const [dropGeneratedUrl, setDropGeneratedUrl] = useState("");
   const [claimDropId, setClaimDropId] = useState("");
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
+
+  // Red Envelope State
+  const [envelopeTotal, setEnvelopeTotal] = useState("20");
+  const [envelopeClaims, setEnvelopeClaims] = useState("4");
+  const [envelopeTitle, setEnvelopeTitle] = useState("🧧 Red Envelope for Friends");
+  const [envelopes, setEnvelopes] = useState<EnvelopeItem[]>([
+    {
+      id: 1,
+      title: "🧧 Friday Beers Drop",
+      total: 30,
+      claims: 3,
+      claimed: 2,
+      share: 10,
+      url: `${window.location.origin}${window.location.pathname}?envelope=1`,
+    },
+  ]);
+  const [generatedEnvelopeUrl, setGeneratedEnvelopeUrl] = useState("");
 
   // Split State
   const [splits, setSplits] = useState<SplitItem[]>([
@@ -71,7 +98,12 @@ function App() {
 
     // Deep link parameters check
     const params = new URLSearchParams(window.location.search);
-    const viewParam = params.get("view"); if (viewParam === "drop") setScreen("drop"); if (viewParam === "split") setScreen("split"); const dropParam = params.get("drop") || params.get("id");
+    const viewParam = params.get("view");
+    if (viewParam === "drop") setScreen("drop");
+    if (viewParam === "split") setScreen("split");
+    if (viewParam === "envelope") setScreen("envelope");
+
+    const dropParam = params.get("drop") || params.get("id");
     if (dropParam) {
       setClaimDropId(dropParam);
       setScreen("claim");
@@ -115,6 +147,47 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleCreateEnvelope() {
+    if (!envelopeTotal || !envelopeClaims) return;
+    const total = parseFloat(envelopeTotal);
+    const claims = parseInt(envelopeClaims, 10);
+    const share = total / claims;
+
+    const id = envelopes.length + 1;
+    const link = `${window.location.origin}${window.location.pathname}?envelope=${id}`;
+
+    const newEnv: EnvelopeItem = {
+      id,
+      title: envelopeTitle || "🧧 Red Envelope",
+      total,
+      claims,
+      claimed: 0,
+      share,
+      url: link,
+    };
+
+    setEnvelopes([newEnv, ...envelopes]);
+    setGeneratedEnvelopeUrl(link);
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred("success");
+    }
+  }
+
+  function handleClaimEnvelopeShare(envId: number) {
+    setEnvelopes((prev) =>
+      prev.map((e) => {
+        if (e.id === envId && e.claimed < e.claims) {
+          return { ...e, claimed: e.claimed + 1 };
+        }
+        return e;
+      })
+    );
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred("success");
+    }
+    alert("🎉 Red Envelope Share claimed into your wallet!");
   }
 
   async function handleClaimDrop() {
@@ -223,44 +296,46 @@ function App() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <button
               className="btn btn-primary"
-              style={{ flexDirection: "column", padding: "20px 12px", gap: 10 }}
+              style={{ flexDirection: "column", padding: "16px 12px", gap: 8 }}
               onClick={() => setScreen("drop")}
             >
-              <Send size={24} />
-              <span>🎁 Ping Drop</span>
-              <small style={{ fontWeight: 400, opacity: 0.8 }}>Send via chat link</small>
+              <Send size={22} />
+              <span>🎁 Direct Drop</span>
+              <small style={{ fontWeight: 400, opacity: 0.8 }}>Single claim link</small>
             </button>
+
             <button
-              className="btn btn-secondary"
-              style={{ flexDirection: "column", padding: "20px 12px", gap: 10 }}
-              onClick={() => setScreen("split")}
+              className="btn btn-primary"
+              style={{ flexDirection: "column", padding: "16px 12px", gap: 8, background: "linear-gradient(135deg, #e11d48 0%, #f43f5e 100%)" }}
+              onClick={() => setScreen("envelope")}
             >
-              <Users size={24} />
-              <span>🧾 Ping Split</span>
-              <small style={{ fontWeight: 400, opacity: 0.8 }}>Escrow bill pooling</small>
+              <Gift size={22} />
+              <span>🧧 Red Envelope</span>
+              <small style={{ fontWeight: 400, opacity: 0.8 }}>Multi-claim envelope</small>
             </button>
           </div>
 
+          <button
+            className="btn btn-secondary"
+            style={{ width: "100%", padding: "14px 16px", gap: 10 }}
+            onClick={() => setScreen("split")}
+          >
+            <Users size={20} />
+            <span>🧾 Ping Split Escrow (Group Pooling)</span>
+          </button>
+
           <div className="card">
-            <h3 style={{ fontSize: 16, marginBottom: 12 }}>Active Escrow Splits</h3>
+            <h3 style={{ fontSize: 16, marginBottom: 12 }}>🧧 Active Group Envelopes</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {splits.slice(0, 2).map((s) => (
-                <div key={s.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: 10 }}>
+              {envelopes.slice(0, 2).map((e) => (
+                <div key={e.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <strong>{s.title}</strong>
-                    <span className={`badge ${s.current >= s.goal ? "badge-closed" : "badge-active"}`}>
-                      {s.current >= s.goal ? "Funded" : "Active"}
-                    </span>
-                  </div>
-                  <div className="progress-bar-container">
-                    <div
-                      className="progress-bar-fill"
-                      style={{ width: `${Math.min(100, (s.current / s.goal) * 100)}%` }}
-                    />
+                    <strong>{e.title}</strong>
+                    <span className="badge badge-active">{e.claimed} / {e.claims} claimed</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text-secondary)" }}>
-                    <span>{s.current} / {s.goal} XLM</span>
-                    <span>Share: {s.share} XLM</span>
+                    <span>Total: {e.total} XLM</span>
+                    <span>{e.share} XLM each</span>
                   </div>
                 </div>
               ))}
@@ -269,10 +344,115 @@ function App() {
         </>
       )}
 
+      {/* Screen: Red Envelope */}
+      {screen === "envelope" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="card">
+            <h2 style={{ fontSize: 20, marginBottom: 8, color: "#f43f5e" }}>🧧 Red Envelope (Multi-Claim)</h2>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>
+              Drop an envelope into a group chat. The first N people who click claim their share trustlessly on Soroban!
+            </p>
+
+            <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Envelope Name / Note</label>
+            <input
+              className="input-field"
+              type="text"
+              value={envelopeTitle}
+              onChange={(e) => setEnvelopeTitle(e.target.value)}
+              placeholder="e.g. Birthday drop for everyone!"
+            />
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+              <div>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Total XLM</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  value={envelopeTotal}
+                  onChange={(e) => setEnvelopeTotal(e.target.value)}
+                  placeholder="20"
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Number of Shares</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  value={envelopeClaims}
+                  onChange={(e) => setEnvelopeClaims(e.target.value)}
+                  placeholder="4"
+                />
+              </div>
+            </div>
+
+            <button
+              className="btn btn-primary"
+              style={{ width: "100%", marginTop: 20, background: "linear-gradient(135deg, #e11d48 0%, #f43f5e 100%)" }}
+              disabled={loading}
+              onClick={handleCreateEnvelope}
+            >
+              🧧 Create Red Envelope Drop
+            </button>
+
+            {generatedEnvelopeUrl && (
+              <div style={{ marginTop: 20, padding: 14, backgroundColor: "#0f172a", borderRadius: 12, border: "1px solid var(--border-color)" }}>
+                <span style={{ fontSize: 13, color: "#4ade80", display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle size={16} /> Envelope Link Ready:
+                </span>
+                <p style={{ wordBreak: "break-all", fontSize: 12, margin: "8px 0", color: "#94a3b8" }}>
+                  {generatedEnvelopeUrl}
+                </p>
+                <button
+                  className="btn btn-secondary"
+                  style={{ width: "100%", padding: "8px 12px", fontSize: 13 }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedEnvelopeUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  <Copy size={14} /> {copied ? "Copied!" : "Copy Envelope Link"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 12 }}>Live Group Envelopes</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {envelopes.map((e) => (
+                <div key={e.id} style={{ backgroundColor: "#0f172a", border: "1px solid var(--border-color)", borderRadius: 12, padding: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <strong>{e.title}</strong>
+                    <span className="badge badge-active">{e.claimed} / {e.claims} claimed</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div className="progress-bar-fill" style={{ width: `${(e.claimed / e.claims) * 100}%`, background: "linear-gradient(90deg, #e11d48, #f43f5e)" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 10 }}>
+                    <span>Total: {e.total} XLM</span>
+                    <span>Share: {e.share} XLM</span>
+                  </div>
+                  {e.claimed < e.claims ? (
+                    <button className="btn btn-primary" style={{ width: "100%", padding: "10px", background: "#e11d48" }} onClick={() => handleClaimEnvelopeShare(e.id)}>
+                      🧧 Open & Claim Share ({e.share} XLM)
+                    </button>
+                  ) : (
+                    <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13 }}>
+                      Envelope fully claimed!
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Screen: Drop */}
       {screen === "drop" && (
         <div className="card">
-          <h2 style={{ fontSize: 20, marginBottom: 8 }}>🎁 Send a Ping Drop</h2>
+          <h2 style={{ fontSize: 20, marginBottom: 8 }}>🎁 Send a Direct Ping Drop</h2>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>
             Lock funds into a Stellar Claimable Balance. Send the link to any chat—anyone who taps it claims instantly.
           </p>
@@ -455,4 +635,3 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
-
