@@ -19,24 +19,24 @@ jobs:
         run: |
           cd contracts/split-escrow
           cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0 || true
-      - name: Cargo Test
+      - name: Cargo Test (split-escrow & envelope-drop)
         run: |
-          cd contracts/split-escrow
-          cargo test
+          cd contracts/split-escrow && cargo test
+          cd ../envelope-drop && cargo test
 
   apps:
-    name: Build Apps (Bot & MiniApp)
+    name: Build & Test Apps (Bot & MiniApp)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Build Bot
+          node-version: '20'
+      - name: Build & Test Bot
         run: |
           cd apps/bot
           npm ci
-          npm run build
+          npm test
       - name: Build MiniApp
         run: |
           cd apps/miniapp

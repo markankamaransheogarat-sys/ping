@@ -1,11 +1,11 @@
 # Roadmap
 
 - [x] Scaffold monorepo
-- [ ] Split escrow contract + tests (testnet deploy)
-- [ ] Bot: /start, deep links, initData verification
-- [ ] Mini App: Drop create/claim screens
-- [ ] Mini App: Split create/contribute screens
-- [ ] Testnet beta with 20 friends
+- [x] Split escrow & envelope-drop Soroban contracts + unit tests
+- [x] Bot: /start, inline queries, deep links, initData verification
+- [x] Mini App: Drop & Red Envelope create/claim screens
+- [x] Mini App: Split create/contribute screens
+- [x] Stellar Community Fund (SCF) application (`docs/SCF_GRANT_APPLICATION.md`)
+- [ ] Testnet deploy & beta with 20 friends
 - [ ] Passkey wallets, card on-ramp
-- [ ] Stellar Community Fund application
 - [ ] Mainnet
